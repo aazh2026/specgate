@@ -1,0 +1,29 @@
+name: Probe JSR OIDC scope creation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint OIDC token
+        id: oidc
+        run: |
+          echo "token=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=jsr")" >> $GITHUB_OUTPUT
+      - name: Try creating the scope with the OIDC token
+        env:
+          OIDC: ${{ steps.oidc.outputs.token }}
+        run: |
+          echo "--- oidc len: ${#OIDC} ---"
+          echo "--- POST /scopes ---"
+          curl -s -w "\nHTTP %{http_code}\n" -X POST https://api.jsr.io/scopes \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            -d '{"scope":"aazh2026","description":"Requirement coverage for your codebase. Like test coverage, but for acceptance criteria."}'
+          echo "--- GET /user ---"
+          curl -s -w "\nHTTP %{http_code}\n" https://api.jsr.io/user -H "Authorization: Bearer $OIDC"
