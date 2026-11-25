@@ -67,6 +67,9 @@ npx --yes github:aazh2026/specgate
 # or with Homebrew
 brew install aazh2026/specgate/specgate
 
+# or as a container image (no local Node needed)
+docker run --rm -v "$PWD:/workspace" -w /workspace ghcr.io/aazh2026/specgate:0.1.4
+
 # or clone and run it directly
 git clone https://github.com/aazh2026/specgate
 cd specgate && node bin/specgate.js
