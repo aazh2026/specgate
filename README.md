@@ -16,7 +16,7 @@ score. Every time.
 ![specgate demo](assets/demo.gif)
 
 ```bash
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.4/specgate-0.1.4.tgz specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.7/specgate-0.1.7.tgz specgate
 ```
 
 ```
@@ -71,7 +71,7 @@ npx --yes github:aazh2026/specgate
 brew install aazh2026/specgate/specgate
 
 # or as a container image (no local Node needed)
-docker run --rm -v "$PWD:/workspace" -w /workspace ghcr.io/aazh2026/specgate:0.1.4
+docker run --rm -v "$PWD:/workspace" -w /workspace ghcr.io/aazh2026/specgate:0.1.7
 
 # or clone and run it directly
 git clone https://github.com/aazh2026/specgate
@@ -112,7 +112,7 @@ This is a fallback for people who already have a GitHub token — npmjs
 If your project has no written spec yet, scaffold one:
 
 ```bash
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.4/specgate-0.1.4.tgz specgate init
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.7/specgate-0.1.7.tgz specgate init
 ```
 
 That writes a starter `SPEC.md` with the acceptance criteria already structured,
@@ -122,7 +122,7 @@ plus a `.github/workflows/requirements.yml` CI gate. It detects your stack
 Then edit the criteria, tag your tests, and scan:
 
 ```bash
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.4/specgate-0.1.4.tgz specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.7/specgate-0.1.7.tgz specgate
 ```
 
 ## Usage
@@ -223,7 +223,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aazh2026/specgate@v0.1.4
+      - uses: aazh2026/specgate@v0.1.7
         with:
           min: 80
           fail-uncovered: true
@@ -233,7 +233,7 @@ The action exposes the score as an output:
 
 ```yaml
       - id: specgate
-        uses: aazh2026/specgate@v0.1.4
+        uses: aazh2026/specgate@v0.1.7
       - run: echo "Coverage was ${{ steps.specgate.outputs.score }}%"
 ```
 
@@ -260,7 +260,7 @@ For GitHub code scanning, upload the SARIF report:
 Or let the action do it:
 
 ```yaml
-      - uses: aazh2026/specgate@v0.1.4
+      - uses: aazh2026/specgate@v0.1.7
         with:
           sarif: specgate.sarif
       - uses: github/codeql-action/upload-sarif@v3
