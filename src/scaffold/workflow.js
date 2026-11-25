@@ -31,13 +31,15 @@ jobs:
           node-version: 20
 
       - name: Check requirement coverage
-        run: npx specgate ${args.join(' ')}
+        uses: aazh2026/specgate@v0.1.1
+        with:
+          min: ${min}
+          fail-uncovered: ${failUncovered}
 
-      # Uncomment to surface gaps in GitHub code scanning.
-      # - name: Write SARIF report
-      #   run: npx specgate --sarif-out specgate.sarif --format sarif
-      # - uses: github/codeql-action/upload-sarif@v3
+      # Or run the CLI directly:
+      # - uses: actions/setup-node@v4
       #   with:
-      #     sarif_file: specgate.sarif
+      #     node-version: 20
+      # - run: npx specgate ${args.join(' ')}
 `;
 }

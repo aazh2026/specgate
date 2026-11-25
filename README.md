@@ -167,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aazh2026/specgate@v0.1.0
+      - uses: aazh2026/specgate@v0.1.1
         with:
           min: 80
           fail-uncovered: true
@@ -177,7 +177,7 @@ The action exposes the score as an output:
 
 ```yaml
       - id: specgate
-        uses: aazh2026/specgate@v0.1.0
+        uses: aazh2026/specgate@v0.1.1
       - run: echo "Coverage was ${{ steps.specgate.outputs.score }}%"
 ```
 
@@ -204,7 +204,7 @@ For GitHub code scanning, upload the SARIF report:
 Or let the action do it:
 
 ```yaml
-      - uses: aazh2026/specgate@v0.1.0
+      - uses: aazh2026/specgate@v0.1.1
         with:
           sarif: specgate.sarif
       - uses: github/codeql-action/upload-sarif@v3
