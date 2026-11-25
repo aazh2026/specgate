@@ -58,8 +58,11 @@ It tells you nothing about *which requirements exist*.
 ## Install
 
 ```bash
-# run without installing — no npm account, no registry token
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.4/specgate-0.1.4.tgz specgate
+# from npmjs — no account, no token
+npx --yes specgate-cli
+
+# or install it
+npm install --save-dev specgate-cli
 
 # or straight from the git tag
 npx --yes github:aazh2026/specgate
@@ -77,10 +80,11 @@ cd specgate && node bin/specgate.js
 
 Requires Node.js 20+. No runtime dependencies.
 
-> **Coming to npm.** The publish pipeline is wired up, but the package is not
-> on npmjs.org yet — `npx specgate` will 404 until it is. Use the release
-> tarball form above in the meantime; it runs the exact same published
-> tarball and needs no npm account.
+> **On the npm package name.** The package is published as `specgate-cli`,
+> not `specgate`. The unscoped `specgate` name is refused by the npm registry
+> because an unrelated package named `spec-gate` already exists and npm's
+> name-confusion rule blocks near-identical names. `specgate-cli` is the same
+> code with the same `specgate` command; only the package name differs.
 
 ### GitHub Packages (fallback, needs a token)
 
@@ -100,9 +104,8 @@ with a `.npmrc` carrying a GitHub token that has the `read:packages` scope:
 //npm.pkg.github.com/:_authToken=ghp_xxx
 ```
 
-This is a fallback for people who already have a GitHub token — not a
-replacement for a public npmjs.org package. The two zero-token paths above
-(tarball, `npx github:`) are the ones that need no credentials at all.
+This is a fallback for people who already have a GitHub token — npmjs
+(`specgate-cli`) needs no credentials at all.
 
 ## Quick start
 

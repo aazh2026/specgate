@@ -15,9 +15,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.14.0
           registry-url: https://registry.npmjs.org
+      # The package is published under this name on npmjs. The unscoped
+      # `specgate` name is refused by the registry because `spec-gate` already
+      # exists and npm blocks near-identical names.
+      - name: Set the npm package name
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.name = 'specgate-cli';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+      # Trusted publishing (OIDC) is used when the runner can mint an id-token;
+      # the legacy NPM_TOKEN secret stays as a fallback for self-hosted or
+      # restricted runners.
       - run: npm publish --provenance --access public
-        if: ${{ env.NODE_AUTH_TOKEN != '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
