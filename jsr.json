@@ -1,0 +1,16 @@
+{
+  "name": "@aazh2026/specgate",
+  "version": "0.1.1",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "bin",
+      "README.md",
+      "LICENSE",
+      "package.json"
+    ]
+  }
+}
