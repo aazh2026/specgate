@@ -296,6 +296,9 @@ report.stats;            // { filesScanned, testFiles }
 
 ## Limitations
 
+Rust test detection is file-level. A `#[cfg(test)] mod` marks a mixed source
+and test file as a test file; it does not restrict evidence to the test module.
+
 Being honest about what this is:
 
 - **It matches text, not meaning.** A criterion written as *"the operator can
