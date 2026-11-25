@@ -78,6 +78,20 @@ git clone https://github.com/aazh2026/specgate
 cd specgate && node bin/specgate.js
 ```
 
+### As a DeepSeek Harness plugin
+
+If you work inside [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness),
+[`dsh-specgate`](https://github.com/aazh2026/dsh-specgate) exposes the same
+engine to the agent as a tool, so it can check requirement coverage before it
+claims a task is done:
+
+```bash
+dsh plugin --profile web add dsh-specgate
+```
+
+The plugin is deterministic and local, just like the CLI: no LLM call at
+runtime, no network, no API key.
+
 Requires Node.js 20+. No runtime dependencies.
 
 > **On the npm package name.** The package is published as `specgate-cli`,
