@@ -1,0 +1,30 @@
+name: Self-test the published action
+
+# This workflow runs the action from the repository itself, exactly as a user
+# would, to prove the action works end to end.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: specgate
+        uses: aazh2026/specgate@v0.1.1
+        with:
+          min: 0
+          spec: examples/invoice-export/SPEC.md
+
+      - name: Check the action produced sane outputs
+        run: |
+          echo "score=${{ steps.specgate.outputs.score }}"
+          echo "total=${{ steps.specgate.outputs.total }}"
+          echo "uncovered=${{ steps.specgate.outputs.uncovered }}"
+          test "${{ steps.specgate.outputs.total }}" = "5"
+          test "${{ steps.specgate.outputs.uncovered }}" = "1"
+          echo "action self-test passed"
