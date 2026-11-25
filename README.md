@@ -2,12 +2,19 @@
 
 **Requirement coverage for your codebase. Like test coverage, but for acceptance criteria.**
 
+[![CI](https://github.com/aazh2026/specgate/actions/workflows/ci.yml/badge.svg)](https://github.com/aazh2026/specgate/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/specgate.svg)](https://www.npmjs.com/package/specgate)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
+
 Your tests pass. Your lint passes. But does the code actually do what the spec says?
 
 `specgate` reads your acceptance criteria, finds the evidence for each one in your
 codebase, and tells you which requirements are unproven. It is deterministic —
 no LLM calls at runtime, no API key, no network. Same repo, same spec, same
 score. Every time.
+
+![specgate demo](assets/demo.gif)
 
 ```bash
 npx specgate
