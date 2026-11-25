@@ -106,7 +106,12 @@ export function matchCriterion(criterion, files) {
   let best = null;
 
   for (const file of files) {
-    const fileTokens = new Set(tokenize(file.content));
+    // The searchable text of a file is its content plus, when the project uses
+    // path aliases, its own path. A criterion that talks about "the audit
+    // writer" should be able to find `src/lib/audit-writer.ts` even when the
+    // file body never says so.
+    const pathText = file.searchPath ? `${file.searchPath} ${(file.aliasTargets || []).join(' ')}` : '';
+    const fileTokens = new Set(tokenize(`${file.content} ${pathText}`));
 
     // Tier 1: explicit tag anywhere in the file.
     if (file.tags && file.tags.has(id)) {
@@ -124,10 +129,32 @@ export function matchCriterion(criterion, files) {
       const c = termCoverage(terms, fileTokens);
       if (c > cov) cov = c;
     }
-    if (cov < 0.6) continue;
+
+    // The module-name signal. When a file is reached through a tsconfig path
+    // alias, its name is what the criterion is most likely talking about:
+    // "the audit writer" means `audit-writer.ts`. This is a containment test,
+    // not a ratio — the criterion names the whole module, even when the rest
+    // of the sentence is about something else. Using a ratio here would need
+    // a lower threshold, and a lower threshold would weaken every ordinary
+    // match in every project.
+    let moduleMatch = false;
+    if (file.moduleName) {
+      const moduleTokens = tokenize(file.moduleName);
+      if (moduleTokens.length) {
+        for (const text of searchTexts) {
+          const criterionTokens = new Set(tokenize(text));
+          if (moduleTokens.every((t) => criterionTokens.has(t))) {
+            moduleMatch = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!moduleMatch && cov < 0.6) continue;
 
     const tier = file.isTest ? 'named' : 'text';
-    const score = cov + (file.isTest ? 0.5 : 0);
+    const score = (moduleMatch ? 0.6 : cov) + (file.isTest ? 0.5 : 0);
     if (!best || score > best.score) {
       best = { tier, score, file: file.path, isTest: file.isTest, coverage: cov };
     }

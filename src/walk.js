@@ -5,6 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { extractImportSpecifiers, resolveAlias } from './aliases.js';
+
 const IGNORE_DIRS = new Set([
   '.git', 'node_modules', '.venv', 'venv', 'dist', 'build', 'out', 'coverage',
   '__pycache__', '.mypy_cache', '.pytest_cache', '.next', '.nuxt', 'target',
@@ -128,15 +130,18 @@ export function findSpecFiles(root, explicit = []) {
  * Read source files that can hold evidence.
  *
  * @param {string} root the repository root
- * @param {{maxFiles?: number, scope?: string}} [opts]
+ * @param {{maxFiles?: number, scope?: string, aliases?: object|null}} [opts]
  *   `scope` restricts which files count as evidence, relative to `root`.
  *   The specs are still discovered across the whole repository — in a
  *   monorepo the spec usually lives in one package while the implementation
  *   is spread across several.
+ *   `aliases` is the tsconfig `paths` map; aliased imports are resolved so
+ *   the real module's name can be searched.
  */
 export function collectCodeFiles(root, opts = {}) {
   const files = [];
   const scope = opts.scope ? path.resolve(root, opts.scope) : null;
+  const aliases = opts.aliases || null;
 
   for (const file of walk(root, { maxFiles: opts.maxFiles || 20000 })) {
     if (!isCodeFile(file)) continue;
@@ -150,15 +155,48 @@ export function collectCodeFiles(root, opts = {}) {
       const stat = fs.statSync(file);
       if (stat.size > 512 * 1024) continue;
       const content = fs.readFileSync(file, 'utf8');
+
+      // Resolve aliased imports to the real files, so a criterion that talks
+      // about the module behind `@/lib/audit-writer` can find it.
+      const aliasSpecifiers = [];
+      const aliasTargets = [];
+      if (aliases) {
+        for (const specifier of extractImportSpecifiers(content)) {
+          const resolved = resolveAlias(specifier, aliases);
+          if (!resolved) continue;
+          aliasSpecifiers.push(specifier);
+          const targetRel = path.relative(root, resolved).split(path.sep).join('/');
+          if (!targetRel.startsWith('..')) aliasTargets.push(targetRel);
+        }
+      }
+
       files.push({
         path: rel.split(path.sep).join('/'),
         absPath: file,
         isTest: isTestFile(rel, content),
         content,
+        // The alias specifiers this file imports through a tsconfig path.
+        aliasSpecifiers,
+        // The real files those aliases point at.
+        aliasTargets,
+        // The file's own path is searchable only when the project actually
+        // uses path aliases. Without a tsconfig, nothing changes.
+        searchPath: aliases ? rel.split(path.sep).join('/') : '',
+        moduleName: null,
       });
     } catch {
       /* skip unreadable */
     }
   }
+  for (const f of files) {
+    // When the project uses path aliases, a file's own name is part of what
+    // the code calls it: `src/lib/audit-writer.ts` is "the audit writer" to
+    // anyone writing an acceptance criterion, even if the file body never
+    // says so. Without a tsconfig this stays null and nothing changes.
+    if (aliases) {
+      f.moduleName = path.basename(f.path).replace(/\.[^.]+$/, '');
+    }
+  }
+
   return files;
 }

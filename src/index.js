@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { parseSpec } from './spec/parse.js';
 import { parseFeature } from './spec/gherkin.js';
 import { collectCodeFiles, findSpecFiles } from './walk.js';
+import { readPathAliases } from './aliases.js';
 import { indexFiles, matchCriterion } from './matcher.js';
 import { computeScore } from './report.js';
 
@@ -145,7 +146,8 @@ export function runSpecgate(options) {
 
   for (const c of unique) delete c._spec;
 
-  const codeFiles = collectCodeFiles(root, { scope: options.scope });
+  const aliases = readPathAliases(root);
+  const codeFiles = collectCodeFiles(root, { scope: options.scope, aliases });
   const indexed = indexFiles(codeFiles);
 
   const results = unique.map((criterion) => {
