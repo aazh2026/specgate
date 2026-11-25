@@ -61,6 +61,9 @@ It tells you nothing about *which requirements exist*.
 # run without installing
 npx github:aazh2026/specgate
 
+# or with Homebrew
+brew install aazh2026/specgate/specgate
+
 # or clone and run it directly
 git clone https://github.com/aazh2026/specgate
 cd specgate && node bin/specgate.js
