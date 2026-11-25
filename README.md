@@ -159,6 +159,26 @@ stable id. If you wrote ids, it keeps them. If you didn't, it mints `AC-1`,
 - [ ] Export fails loudly when the storage backend is unavailable
 ```
 
+It also reads **Gherkin/Cucumber `.feature` files** — a feature file is a spec
+by construction, so every scenario becomes an acceptance criterion:
+
+```gherkin
+Feature: Invoice export
+
+  @AC-1
+  Scenario: Export invoices as CSV
+    Given an invoice exists
+    When the user requests an export
+    Then a CSV file is produced
+```
+
+A scenario tagged `@AC-1` keeps the same id as the markdown criterion, so a
+`SPEC.md` and a feature file can describe the same requirement without
+double-counting it. Untagged scenarios get `SC-1`, `SC-2`, … in document
+order. Scenarios are matched against their steps as well as their title, so a
+step definition like `Given("the user requests an export")` counts as evidence
+even when the scenario title says something else.
+
 **2. Index the code.** It walks your repo for source and test files, skipping
 `node_modules`, `dist`, and friends. Identifier boundaries are respected:
 `resetPassword`, `export_csv`, and `HTTPResponse` are all split correctly, so a

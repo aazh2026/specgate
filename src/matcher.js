@@ -94,7 +94,14 @@ export function termCoverage(terms, haystackTokens) {
  */
 export function matchCriterion(criterion, files) {
   const id = criterion.normalisedId;
-  const terms = keyTerms(criterion.text);
+  // A Gherkin scenario is matched on its title *or* on any single step: the
+  // step definition in the code is phrased like the step, not like the title.
+  // Matching the whole scenario text at once would demand every step in one
+  // file, which is almost never true.
+  const searchTexts = criterion.searchTexts && criterion.searchTexts.length
+    ? criterion.searchTexts
+    : [criterion.text];
+  const termSets = searchTexts.map((t) => keyTerms(t));
 
   let best = null;
 
@@ -110,8 +117,13 @@ export function matchCriterion(criterion, files) {
       continue;
     }
 
-    // Tier 2/3: lexical coverage.
-    const cov = termCoverage(terms, fileTokens);
+    // Tier 2/3: lexical coverage. The best-matching phrase wins, so one
+    // matching step is enough evidence for the whole scenario.
+    let cov = 0;
+    for (const terms of termSets) {
+      const c = termCoverage(terms, fileTokens);
+      if (c > cov) cov = c;
+    }
     if (cov < 0.6) continue;
 
     const tier = file.isTest ? 'named' : 'text';

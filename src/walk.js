@@ -91,13 +91,20 @@ export function findSpecFiles(root, explicit = []) {
   ];
   for (const c of conventions) push(path.join(root, c));
 
-  // Any markdown that contains an acceptance-criteria section.
+  // Any markdown that contains an acceptance-criteria section, plus any
+  // Gherkin feature file (a feature file is a spec by construction).
   for (const file of walk(root, { maxFiles: 4000 })) {
-    if (!/\.md$/i.test(file)) continue;
+    const isMarkdown = /\.md$/i.test(file);
+    const isFeature = /\.feature$/i.test(file);
+    if (!isMarkdown && !isFeature) continue;
     const rel = path.relative(root, file);
     if (/(^|\/)(node_modules|vendor|dist|build)\//.test(rel)) continue;
     try {
       const content = fs.readFileSync(file, 'utf8');
+      if (isFeature) {
+        push(file);
+        continue;
+      }
       if (/^\s{0,3}#{1,6}\s.*(acceptance\s+criteria|验收标准|acceptance)/im.test(content)) {
         push(file);
       }
