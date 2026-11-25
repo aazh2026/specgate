@@ -71,6 +71,24 @@ npx github:aazh2026/specgate
 
 Requires Node.js 20+. No runtime dependencies.
 
+## Quick start
+
+If your project has no written spec yet, scaffold one:
+
+```bash
+npx specgate init
+```
+
+That writes a starter `SPEC.md` with the acceptance criteria already structured,
+plus a `.github/workflows/requirements.yml` CI gate. It detects your stack
+(language, test runner, package manager) so the scaffold matches your project.
+
+Then edit the criteria, tag your tests, and scan:
+
+```bash
+npx specgate
+```
+
 ## Usage
 
 ```bash
@@ -91,6 +109,8 @@ specgate --sarif-out specgate.sarif       # upload to GitHub code scanning
 | `--fail-untested` | Exit 1 if any criterion is implemented but untested |
 | `--json-out <file>` | Write the JSON report to a file |
 | `--sarif-out <file>` | Write a SARIF report for GitHub code scanning |
+| `--force` | With `init`: overwrite existing files |
+| `--name <name>` | With `init`: project name for the spec title |
 | `-v`, `--verbose` | Show every criterion, not just the gaps |
 
 ## How it works

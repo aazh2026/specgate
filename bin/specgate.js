@@ -9,6 +9,7 @@ import process from 'node:process';
 
 import { runSpecgate } from '../src/index.js';
 import { renderText, renderJson, renderSarif } from '../src/report.js';
+import { init, renderInitResult } from '../src/scaffold/init.js';
 
 const VERSION = '0.1.0';
 
@@ -17,6 +18,11 @@ specgate ${VERSION} — requirement coverage for your codebase
 
 Usage:
   specgate [options] [path]
+  specgate init [options] [path]
+
+Commands:
+  (default)     Scan the project and report requirement coverage.
+  init          Create a starter SPEC.md and a CI gate for this project.
 
 Options:
   --spec <file>        Spec file to read (repeatable). Default: auto-discover.
@@ -28,11 +34,14 @@ Options:
   --sarif-out <file>   Write a SARIF report (for GitHub code scanning)
   --verbose, -v        Show every criterion, not just the gaps
   --quiet              Print nothing; rely on exit code
+  --force              With init: overwrite existing files
+  --name <name>        With init: project name for the spec title
   --version, -V        Print version
   --help, -h           Show this help
 
 Examples:
   specgate
+  specgate init --min 70
   specgate --spec docs/SPEC.md --format json
   specgate --min 80 --fail-untested
   specgate --sarif-out specgate.sarif --format sarif
@@ -41,6 +50,7 @@ Examples:
 function parseArgs(argv) {
   const opts = {
     path: '.',
+    command: 'scan',
     specs: [],
     format: 'text',
     min: null,
@@ -50,6 +60,8 @@ function parseArgs(argv) {
     sarifOut: null,
     verbose: false,
     quiet: false,
+    force: false,
+    name: null,
     help: false,
     version: false,
   };
@@ -72,6 +84,15 @@ function parseArgs(argv) {
         break;
       case '--quiet':
         opts.quiet = true;
+        break;
+      case '--force':
+        opts.force = true;
+        break;
+      case '--name':
+        opts.name = argv[++i];
+        break;
+      case 'init':
+        opts.command = 'init';
         break;
       case '--spec':
         opts.specs.push(argv[++i]);
@@ -127,6 +148,17 @@ function main() {
   if (!fs.existsSync(root)) {
     console.error(`specgate: path not found: ${root}`);
     return 2;
+  }
+
+  if (opts.command === 'init') {
+    const result = init(root, {
+      force: opts.force,
+      name: opts.name,
+      min: opts.min,
+      failUncovered: opts.failUncovered,
+    });
+    if (!opts.quiet) console.log(renderInitResult(result));
+    return 0;
   }
 
   const report = runSpecgate({

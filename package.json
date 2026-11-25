@@ -13,7 +13,8 @@
   "files": [
     "bin",
     "src",
-    "templates",
+    "assets",
+    "examples",
     "README.md",
     "LICENSE"
   ],
