@@ -155,6 +155,8 @@ something else entirely. Only an explicit tag is worth full credit.
 
 ## Using it in CI
 
+The quickest way in:
+
 ```yaml
 # .github/workflows/requirements.yml
 name: Requirement coverage
@@ -165,6 +167,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: aazh2026/specgate@v0.1.0
+        with:
+          min: 80
+          fail-uncovered: true
+```
+
+The action exposes the score as an output:
+
+```yaml
+      - id: specgate
+        uses: aazh2026/specgate@v0.1.0
+      - run: echo "Coverage was ${{ steps.specgate.outputs.score }}%"
+```
+
+Or run the CLI directly:
+
+```yaml
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npx specgate --min 80 --fail-uncovered
@@ -177,6 +196,17 @@ For GitHub code scanning, upload the SARIF report:
 
 ```yaml
       - run: npx specgate --sarif-out specgate.sarif --format sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: specgate.sarif
+```
+
+Or let the action do it:
+
+```yaml
+      - uses: aazh2026/specgate@v0.1.0
+        with:
+          sarif: specgate.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: specgate.sarif

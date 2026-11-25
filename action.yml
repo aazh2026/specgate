@@ -1,0 +1,83 @@
+name: 'Requirement coverage'
+description: 'Check that your acceptance criteria are actually implemented. Like test coverage, but for requirements.'
+author: 'aazh2026'
+
+branding:
+  icon: 'check-square'
+  color: 'green'
+
+inputs:
+  min:
+    description: 'Minimum coverage score required to pass. Set to 0 to disable the score gate.'
+    required: false
+    default: '0'
+  fail-uncovered:
+    description: 'Fail the build if any acceptance criterion has no evidence.'
+    required: false
+    default: 'false'
+  fail-untested:
+    description: 'Fail the build if any acceptance criterion is implemented but untested.'
+    required: false
+    default: 'false'
+  spec:
+    description: 'Spec file to read. Leave empty to auto-discover.'
+    required: false
+    default: ''
+  sarif:
+    description: 'Path to write a SARIF report for GitHub code scanning.'
+    required: false
+    default: ''
+
+outputs:
+  score:
+    description: 'Requirement coverage score, 0-100.'
+    value: ${{ steps.run.outputs.score }}
+  total:
+    description: 'Total number of acceptance criteria found.'
+    value: ${{ steps.run.outputs.total }}
+  uncovered:
+    description: 'Number of acceptance criteria with no evidence.'
+    value: ${{ steps.run.outputs.uncovered }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run specgate
+      id: run
+      shell: bash
+      env:
+        SPEC: ${{ inputs.spec }}
+        MIN: ${{ inputs.min }}
+        FAIL_UNCOVERED: ${{ inputs.fail-uncovered }}
+        FAIL_UNTESTED: ${{ inputs.fail-untested }}
+        SARIF_OUT: ${{ inputs.sarif }}
+      run: |
+        set -euo pipefail
+
+        ARGS=()
+        if [ -n "${SPEC}" ]; then ARGS+=(--spec "${SPEC}"); fi
+        if [ -n "${MIN}" ] && [ "${MIN}" != "0" ]; then ARGS+=(--min "${MIN}"); fi
+        if [ "${FAIL_UNCOVERED}" = "true" ]; then ARGS+=(--fail-uncovered); fi
+        if [ "${FAIL_UNTESTED}" = "true" ]; then ARGS+=(--fail-untested); fi
+        if [ -n "${SARIF_OUT}" ]; then ARGS+=(--sarif-out "${SARIF_OUT}"); fi
+
+        # Write the JSON report so the outputs can be read.
+        JSON_OUT="$(mktemp).json"
+        node "$GITHUB_ACTION_PATH/bin/specgate.js" "${ARGS[@]+"${ARGS[@]}"}" --json-out "${JSON_OUT}"
+
+        # Read with JSON.parse: `require` on an extension-less file would try to
+        # parse it as JavaScript.
+        SCORE="$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).score)" "${JSON_OUT}")"
+        TOTAL="$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).summary.total)" "${JSON_OUT}")"
+        UNCOVERED="$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).summary.uncovered)" "${JSON_OUT}")"
+
+        {
+          echo "score=${SCORE}"
+          echo "total=${TOTAL}"
+          echo "uncovered=${UNCOVERED}"
+        } >> "$GITHUB_OUTPUT"

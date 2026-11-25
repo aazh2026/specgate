@@ -16,6 +16,7 @@
     "assets",
     "examples",
     "README.md",
+    "action.yml",
     "LICENSE"
   ],
   "engines": {
