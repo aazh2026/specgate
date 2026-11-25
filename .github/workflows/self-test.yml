@@ -22,9 +22,22 @@ jobs:
 
       - name: Check the action produced sane outputs
         run: |
+          set -euo pipefail
           echo "score=${{ steps.specgate.outputs.score }}"
           echo "total=${{ steps.specgate.outputs.total }}"
           echo "uncovered=${{ steps.specgate.outputs.uncovered }}"
-          test "${{ steps.specgate.outputs.total }}" = "5"
-          test "${{ steps.specgate.outputs.uncovered }}" = "1"
+
+          # Compare against a direct CLI run in the same working directory.
+          # (The action scans the whole repo, so the score is not the same as
+          # running inside examples/invoice-export on its own.)
+          node "$GITHUB_WORKSPACE/bin/specgate.js" --spec examples/invoice-export/SPEC.md \
+            --json-out /tmp/cli.json --quiet
+          CLI_SCORE="$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/cli.json','utf8')).score)")"
+          CLI_TOTAL="$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/cli.json','utf8')).summary.total)")"
+          CLI_UNCOVERED="$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/cli.json','utf8')).summary.uncovered)")"
+
+          test "${{ steps.specgate.outputs.score }}" = "$CLI_SCORE"
+          test "${{ steps.specgate.outputs.total }}" = "$CLI_TOTAL"
+          test "${{ steps.specgate.outputs.uncovered }}" = "$CLI_UNCOVERED"
+          test "$CLI_TOTAL" = "5"
           echo "action self-test passed"
