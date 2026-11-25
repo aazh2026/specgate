@@ -1,0 +1,35 @@
+name: Publish to JSR
+
+# Publishes the package to JSR (jsr.io), a TypeScript-first registry that
+# needs NO separate account: publishing authenticates through GitHub's OIDC
+# token, so the only credential here is the workflow's own `id-token: write`
+# permission. The scope is created automatically from the GitHub repository.
+#
+# This is the one registry path that needs neither an npm account nor a
+# personal API token, so it works even while npmjs.org is blocked behind a
+# Cloudflare challenge.
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Verify the CLI still works before publishing
+        run: node --test test/*.test.js
+
+      - name: Publish to JSR
+        run: deno publish --allow-slow-types
