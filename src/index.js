@@ -29,6 +29,27 @@ function readVersion() {
 export const VERSION = readVersion();
 
 /**
+ * The scope a criterion id belongs to.
+ *
+ * Ids are unique inside a project, not inside a file: a `SPEC.md` at the
+ * project root and a `features/export.feature` describe the same project, so
+ * `@AC-1` in both is one requirement. But two different projects — two
+ * example directories in this repo, say — each have their own `AC-1`.
+ *
+ * The scope is therefore the spec file's directory, with a trailing
+ * `features/` (or `spec/`) stripped so a feature file and a root spec land in
+ * the same scope.
+ */
+function specScope(file) {
+  const dir = String(file).split('/').slice(0, -1).join('/');
+  const parts = dir.split('/').filter(Boolean);
+  if (parts.length && (parts[parts.length - 1] === 'features' || parts[parts.length - 1] === 'spec')) {
+    parts.pop();
+  }
+  return parts.join('/') || '.';
+}
+
+/**
  * @param {{root: string, specFiles?: string[]}} options
  */
 export function runSpecgate(options) {
@@ -46,44 +67,80 @@ export function runSpecgate(options) {
     const parsed = /\.feature$/i.test(rel)
       ? parseFeature(content, { file: rel })
       : parseSpec(content, { file: rel });
+    const specIndex = specs.length;
     specs.push({
       file: rel,
       criteria: parsed.criteria.length,
       headings: parsed.headings.length,
     });
-    criteria.push(...parsed.criteria);
+    for (const c of parsed.criteria) {
+      criteria.push({ ...c, _spec: specIndex });
+    }
   }
 
   // Deduplicate criteria that appear in several spec files.
   //
-  // Two rules, in order:
-  //   1. the same id *and* the same text → one requirement described twice
-  //      (e.g. the same bullet copied into two files);
-  //   2. the same explicit id with different wording → still one requirement.
-  //      This is what lets a SPEC.md and a .feature file describe the same
-  //      acceptance criterion without double-counting it. The two texts are
-  //      merged so that evidence can match either wording.
-  const seen = new Map();
+  // Rule 1 (global): the same id *and* the same text → one requirement
+  // described twice, e.g. the same bullet copied into two files.
+  //
+  // Rule 2 (scoped): the same explicit id with different wording → still one
+  // requirement, but only inside one spec scope. This is what lets a SPEC.md
+  // and a feature file in the same project describe the same criterion
+  // without double-counting it, while two unrelated projects (for example two
+  // example directories in this repo) keep their own AC-1.
+  //
+  // Whatever gets dropped or merged is subtracted from the per-spec counts,
+  // so `sum(specs[].criteria) === summary.total` always holds.
+  const byScopeAndId = new Map();
+  const seen = new Set();
   const unique = [];
+
   for (const c of criteria) {
-    const key = `${c.normalisedId}::${c.slug}`;
-    const idKey = c.normalisedId;
-
-    if (seen.has(key)) continue;
-
-    const existing = seen.get(idKey);
-    if (existing && c.source === 'explicit' && existing.source === 'explicit') {
-      // Same id, different text: merge the searchable phrasings.
-      const texts = new Set([...(existing.searchTexts || [existing.text]), ...(c.searchTexts || [c.text])]);
-      existing.searchTexts = [...texts];
-      existing.alsoIn = [...new Set([...(existing.alsoIn || []), c.file])];
+    const scope = specScope(c.file);
+    // The slug is part of the key, so the scope has to be part of it too:
+    // two different projects can have an `AC-1` whose text slugifies to the
+    // same string, and those are two requirements.
+    const key = `${scope}::${c.normalisedId}::${c.slug}`;
+    if (seen.has(key)) {
+      specs[c._spec].criteria -= 1;
       continue;
     }
 
-    seen.set(key, true);
-    seen.set(idKey, c);
+    const scopedId = `${scope}::${c.normalisedId}`;
+    const existing = byScopeAndId.get(scopedId);
+
+    if (existing) {
+      if (existing.source === 'explicit' && c.source === 'explicit') {
+        // Same requirement, two wordings: merge the searchable phrasings so
+        // evidence can match either one.
+        const texts = new Set([
+          ...(existing.searchTexts || [existing.text]),
+          ...(c.searchTexts || [c.text]),
+        ]);
+        existing.searchTexts = [...texts];
+        existing.alsoIn = [...new Set([...(existing.alsoIn || []), c.file])];
+        specs[c._spec].criteria -= 1;
+        continue;
+      }
+      // An explicit id beats a minted one: drop the minted duplicate.
+      if (existing.source !== 'explicit' && c.source === 'explicit') {
+        specs[existing._spec].criteria -= 1;
+        const at = unique.indexOf(existing);
+        if (at !== -1) unique[at] = c;
+        byScopeAndId.set(scopedId, c);
+        seen.add(key);
+        continue;
+      }
+      specs[c._spec].criteria -= 1;
+      continue;
+    }
+
+    seen.add(key);
+    byScopeAndId.set(scopedId, c);
     unique.push(c);
   }
+
+  for (const c of unique) delete c._spec;
 
   const codeFiles = collectCodeFiles(root);
   const indexed = indexFiles(codeFiles);
