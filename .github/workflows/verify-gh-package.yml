@@ -1,0 +1,44 @@
+name: Verify GitHub Packages install
+
+# The GitHub Packages npm package is public, but we need to know whether an
+# anonymous `npm install` actually works — raw curl to npm.pkg.github.com
+# returns 401 even for public packages, so verify with the real npm client.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: npm view anonymously
+        run: |
+          set +e
+          echo "--- npm view (no token) ---"
+          npm view @aazh2026/specgate --registry=https://npm.pkg.github.com \
+            --fetch-timeout=30000 2>&1 | head -12
+
+      - name: npm view with GITHUB_TOKEN
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          echo "--- npm view (with token) ---"
+          npm view @aazh2026/specgate --registry=https://npm.pkg.github.com \
+            --fetch-timeout=30000 2>&1 | head -12
+
+      - name: anonymous install into a temp project
+        run: |
+          set +e
+          rm -rf /tmp/t && mkdir -p /tmp/t && cd /tmp/t
+          npm init -y >/dev/null 2>&1
+          echo "--- npm install (anonymous) ---"
+          npm install @aazh2026/specgate --registry=https://npm.pkg.github.com \
+            --fetch-timeout=60000 2>&1 | tail -8
+          echo "--- installed? ---"
+          ls node_modules/@aazh2026 2>&1 | head -5
+          ls node_modules/@aazh2026/specgate/bin 2>&1 | head -5
