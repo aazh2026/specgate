@@ -50,7 +50,10 @@ function specScope(file) {
 }
 
 /**
- * @param {{root: string, specFiles?: string[]}} options
+ * @param {{root: string, specFiles?: string[], scope?: string}} options
+ *   `scope` restricts which files count as evidence. Specs are still
+ *   discovered across the whole repository: in a monorepo the spec usually
+ *   lives in one package while the implementation is spread over several.
  */
 export function runSpecgate(options) {
   const root = path.resolve(options.root || '.');
@@ -142,7 +145,7 @@ export function runSpecgate(options) {
 
   for (const c of unique) delete c._spec;
 
-  const codeFiles = collectCodeFiles(root);
+  const codeFiles = collectCodeFiles(root, { scope: options.scope });
   const indexed = indexFiles(codeFiles);
 
   const results = unique.map((criterion) => {

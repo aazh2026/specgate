@@ -23,6 +23,14 @@ export function isCodeFile(filePath) {
   return CODE_EXT.has(path.extname(filePath).toLowerCase());
 }
 
+/** True when `file` lives inside `dir` (or is `dir` itself). */
+function isInside(dir, file) {
+  const rel = path.relative(dir, file);
+  if (!rel) return true;
+  if (rel.startsWith('..')) return false;
+  return !path.isAbsolute(rel);
+}
+
 export function isTestFile(filePath, content = '') {
   // Rust's inline tests live in modules compiled only in the test configuration.
   if (/\.rs$/i.test(filePath) && /^[ \t]*#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]\s*(?:pub\s+)?mod\s+\w+\s*\{/m.test(content)) return true;
@@ -116,13 +124,28 @@ export function findSpecFiles(root, explicit = []) {
   return found;
 }
 
-/** Read source files that can hold evidence. */
+/**
+ * Read source files that can hold evidence.
+ *
+ * @param {string} root the repository root
+ * @param {{maxFiles?: number, scope?: string}} [opts]
+ *   `scope` restricts which files count as evidence, relative to `root`.
+ *   The specs are still discovered across the whole repository — in a
+ *   monorepo the spec usually lives in one package while the implementation
+ *   is spread across several.
+ */
 export function collectCodeFiles(root, opts = {}) {
   const files = [];
+  const scope = opts.scope ? path.resolve(root, opts.scope) : null;
+
   for (const file of walk(root, { maxFiles: opts.maxFiles || 20000 })) {
     if (!isCodeFile(file)) continue;
     const rel = path.relative(root, file);
     if (/(^|\/)(node_modules|vendor|dist|build|out)\//.test(rel)) continue;
+    // When a scope is given, only files inside it can be evidence. A file
+    // outside the scope must not satisfy a criterion, even if its wording
+    // matches.
+    if (scope && !isInside(scope, file)) continue;
     try {
       const stat = fs.statSync(file);
       if (stat.size > 512 * 1024) continue;

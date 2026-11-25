@@ -38,6 +38,10 @@ Commands:
 
 Options:
   --spec <file>        Spec file to read (repeatable). Default: auto-discover.
+  --scope <dir>        Only consider files under <dir> as evidence. Specs are
+                       still discovered across the whole repository. Useful in
+                       a monorepo, where one package holds the spec and the
+                       implementation lives in another.
   --format <fmt>       text | json | sarif      (default: text)
   --min <n>            Fail (exit 1) if coverage score is below n (default: none)
   --fail-uncovered     Fail if any criterion is uncovered
@@ -74,6 +78,7 @@ function parseArgs(argv) {
     quiet: false,
     force: false,
     name: null,
+    scope: null,
     help: false,
     version: false,
   };
@@ -108,6 +113,9 @@ function parseArgs(argv) {
         break;
       case '--spec':
         opts.specs.push(argv[++i]);
+        break;
+      case '--scope':
+        opts.scope = argv[++i];
         break;
       case '--format':
         opts.format = argv[++i];
@@ -176,6 +184,7 @@ function main() {
   const report = runSpecgate({
     root,
     specFiles: opts.specs,
+    scope: opts.scope,
   });
 
   if (!opts.quiet) {
