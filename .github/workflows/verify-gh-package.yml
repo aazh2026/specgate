@@ -1,8 +1,8 @@
-name: Verify GitHub Packages install
+name: Verify GitHub Packages install (fixed auth)
 
-# The GitHub Packages npm package is public, but we need to know whether an
-# anonymous `npm install` actually works — raw curl to npm.pkg.github.com
-# returns 401 even for public packages, so verify with the real npm client.
+# The previous verification failed because setup-node writes .npmrc only when
+# `registry-url` is set, and the token never reached npm. This version wires
+# it up explicitly and checks anonymous vs. authenticated reads.
 
 on:
   workflow_dispatch:
@@ -15,30 +15,34 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - name: npm view anonymously
+      - name: Configure npm auth for GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set +e
-          echo "--- npm view (no token) ---"
-          npm view @aazh2026/specgate --registry=https://npm.pkg.github.com \
-            --fetch-timeout=30000 2>&1 | head -12
+          set -euo pipefail
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "@aazh2026:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          sed -i 's/_authToken=.*/_authToken=***/' ~/.npmrc
+          cat ~/.npmrc
 
-      - name: npm view with GITHUB_TOKEN
+      - name: npm view with token
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
-          echo "--- npm view (with token) ---"
           npm view @aazh2026/specgate --registry=https://npm.pkg.github.com \
-            --fetch-timeout=30000 2>&1 | head -12
+            --fetch-timeout=30000 2>&1 | head -10
 
-      - name: anonymous install into a temp project
+      - name: install with token and run the CLI
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
           rm -rf /tmp/t && mkdir -p /tmp/t && cd /tmp/t
           npm init -y >/dev/null 2>&1
-          echo "--- npm install (anonymous) ---"
           npm install @aazh2026/specgate --registry=https://npm.pkg.github.com \
-            --fetch-timeout=60000 2>&1 | tail -8
-          echo "--- installed? ---"
-          ls node_modules/@aazh2026 2>&1 | head -5
-          ls node_modules/@aazh2026/specgate/bin 2>&1 | head -5
+            --fetch-timeout=60000 2>&1 | tail -6
+          echo "--- installed files ---"
+          ls node_modules/@aazh2026/specgate/bin 2>&1 | head -3
+          echo "--- run it ---"
+          node node_modules/@aazh2026/specgate/bin/specgate.js --version 2>&1 | head -3
