@@ -1,0 +1,48 @@
+{
+  "name": "specgate",
+  "version": "0.1.0",
+  "description": "Requirement coverage for your codebase. Like test coverage, but for acceptance criteria. Deterministic, no LLM at runtime.",
+  "type": "module",
+  "bin": {
+    "specgate": "bin/specgate.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "lint": "node --check bin/specgate.js"
+  },
+  "keywords": [
+    "spec",
+    "requirements",
+    "acceptance-criteria",
+    "coverage",
+    "quality-gate",
+    "ci",
+    "testing",
+    "traceability",
+    "ai-generated-code",
+    "code-review"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aazh2026/specgate.git"
+  },
+  "homepage": "https://github.com/aazh2026/specgate",
+  "bugs": {
+    "url": "https://github.com/aazh2026/specgate/issues"
+  }
+}
