@@ -40,6 +40,6 @@ jobs:
       # - uses: actions/setup-node@v4
       #   with:
       #     node-version: 20
-      # - run: npx specgate ${args.join(' ')}
+      # - run: npx github:aazh2026/specgate ${args.join(' ')}
 `;
 }

@@ -120,7 +120,7 @@ def build_frames(lines):
         return img
 
     # Frame 1: just the prompt, typed out character by character.
-    cmd = "npx specgate"
+    cmd = "npx github:aazh2026/specgate"
     for i in range(1, len(cmd) + 1):
         frames.append(render(["$ " + cmd[:i]], True))
 
