@@ -16,7 +16,7 @@ score. Every time.
 ![specgate demo](assets/demo.gif)
 
 ```bash
-npx github:aazh2026/specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.1/specgate-0.1.1.tgz specgate
 ```
 
 ```
@@ -58,8 +58,11 @@ It tells you nothing about *which requirements exist*.
 ## Install
 
 ```bash
-# run without installing
-npx github:aazh2026/specgate
+# run without installing — no npm account, no registry token
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.1/specgate-0.1.1.tgz specgate
+
+# or straight from the git tag
+npx --yes github:aazh2026/specgate
 
 # or with Homebrew
 brew install aazh2026/specgate/specgate
@@ -72,16 +75,16 @@ cd specgate && node bin/specgate.js
 Requires Node.js 20+. No runtime dependencies.
 
 > **Coming to npm.** The publish pipeline is wired up, but the package is not on
-> the registry yet — `npx specgate` will 404 until it is. Use the
-> `github:aazh2026/specgate` form above in the meantime; it runs the same code
-> from this repository.
+> the registry yet — `npx specgate` will 404 until it is. Use the release
+> tarball form above in the meantime; it runs the exact same published
+> tarball and needs no npm account.
 
 ## Quick start
 
 If your project has no written spec yet, scaffold one:
 
 ```bash
-npx github:aazh2026/specgate init
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.1/specgate-0.1.1.tgz specgate init
 ```
 
 That writes a starter `SPEC.md` with the acceptance criteria already structured,
@@ -91,7 +94,7 @@ plus a `.github/workflows/requirements.yml` CI gate. It detects your stack
 Then edit the criteria, tag your tests, and scan:
 
 ```bash
-npx github:aazh2026/specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.1/specgate-0.1.1.tgz specgate
 ```
 
 ## Usage
@@ -191,7 +194,7 @@ Or run the CLI directly:
 ```yaml
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: npx github:aazh2026/specgate --min 80 --fail-uncovered
+      - run: npx --yes github:aazh2026/specgate --min 80 --fail-uncovered
 ```
 
 The gate is the point. A spec that says "the user can export invoices as CSV"
@@ -200,7 +203,7 @@ should stop a pull request that doesn't implement it.
 For GitHub code scanning, upload the SARIF report:
 
 ```yaml
-      - run: npx github:aazh2026/specgate --sarif-out specgate.sarif --format sarif
+      - run: npx --yes github:aazh2026/specgate --sarif-out specgate.sarif --format sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: specgate.sarif
