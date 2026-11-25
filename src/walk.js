@@ -23,7 +23,9 @@ export function isCodeFile(filePath) {
   return CODE_EXT.has(path.extname(filePath).toLowerCase());
 }
 
-export function isTestFile(filePath) {
+export function isTestFile(filePath, content = '') {
+  // Rust's inline tests live in modules compiled only in the test configuration.
+  if (/\.rs$/i.test(filePath) && /^[ \t]*#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]\s*(?:pub\s+)?mod\s+\w+\s*\{/m.test(content)) return true;
   const base = path.basename(filePath);
   if (/(^test_.*\.py$)|(_test\.py$)|(test\.py$)|(^conftest\.py$)/i.test(base)) return true;
   if (/\.(test|spec)\.[a-z]+$/i.test(base)) return true;
@@ -121,7 +123,7 @@ export function collectCodeFiles(root, opts = {}) {
       files.push({
         path: rel.split(path.sep).join('/'),
         absPath: file,
-        isTest: isTestFile(rel),
+        isTest: isTestFile(rel, content),
         content,
       });
     } catch {
