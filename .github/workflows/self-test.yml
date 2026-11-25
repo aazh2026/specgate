@@ -39,5 +39,32 @@ jobs:
           test "${{ steps.specgate.outputs.score }}" = "$CLI_SCORE"
           test "${{ steps.specgate.outputs.total }}" = "$CLI_TOTAL"
           test "${{ steps.specgate.outputs.uncovered }}" = "$CLI_UNCOVERED"
-          test "$CLI_TOTAL" = "5"
+
+          # Do NOT hardcode the repo-wide total. specgate auto-discovers every
+          # markdown file with an acceptance-criteria section, so adding a new
+          # example crate changes the total and would break this check for a
+          # reason that has nothing to do with the action.
+          #
+          # Instead assert the things that must stay true:
+          #   1. every spec that was read contributed at least one criterion
+          #      (catches a spec that was found but silently parsed to nothing)
+          #   2. the invoice-export example still contributes exactly its own
+          #      5 criteria
+          #   3. the reported total equals the sum of the per-spec counts
+          node -e '
+            const r = JSON.parse(require("fs").readFileSync("/tmp/cli.json", "utf8"));
+            const specs = r.specs || [];
+            const withCriteria = specs.filter((s) => s.criteria > 0);
+            if (withCriteria.length === 0) throw new Error("no spec contributed criteria");
+            const invoice = specs.find((s) => s.file === "examples/invoice-export/SPEC.md");
+            if (!invoice) throw new Error("invoice-export spec was not discovered");
+            if (invoice.criteria !== 5) {
+              throw new Error("invoice-export should contribute 5 criteria, got " + invoice.criteria);
+            }
+            const sum = specs.reduce((n, s) => n + s.criteria, 0);
+            if (sum !== r.summary.total) {
+              throw new Error(`total ${r.summary.total} != sum of per-spec criteria ${sum}`);
+            }
+            console.log(`specs=${specs.length} criteria=${r.summary.total} score=${r.score}`);
+          '
           echo "action self-test passed"
