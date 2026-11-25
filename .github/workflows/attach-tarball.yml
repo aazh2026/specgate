@@ -1,0 +1,62 @@
+name: Attach the npm tarball to the release
+
+# Every release ships the exact npm tarball as an asset. This gives an
+# install path that needs no npm account and no registry token:
+#
+#   npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.1/specgate-0.1.1.tgz specgate
+#
+# That matters because npmjs.org closed unauthenticated account creation
+# ("Account creation via legacy auth is unavailable") and www.npmjs.com sits
+# behind a DataDome challenge, so the npmjs.org package needs a
+# human-created npm account. The release asset works for everyone today.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build the tarball
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          tag="${GITHUB_REF_NAME}"
+          echo "version=$version tag=$tag"
+          npm pack --pack-destination dist
+          name="specgate-${version}.tgz"
+          mv "dist/specgate-${version}.tgz" "$name"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+
+      - name: Upload the tarball to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "${GITHUB_REF_NAME}" "$NAME" --clobber
+          gh release view "${GITHUB_REF_NAME}" --json assets \
+            --jq '.assets[] | "\(.name) \(.size) bytes"'
+
+      - name: Verify the asset is installable anonymously
+        run: |
+          set -euo pipefail
+          url="https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${NAME}"
+          echo "checking $url"
+          curl -fsSL -o /tmp/pkg.tgz "$url"
+          rm -rf /tmp/verify && mkdir -p /tmp/verify && cd /tmp/verify
+          npm init -y >/dev/null 2>&1
+          npm install "$url" --fetch-timeout=90000 >/dev/null 2>&1
+          version=$(node node_modules/specgate/bin/specgate.js --version)
+          echo "installed version: $version"
+          test "$version" = "$(node -p "require('${{ github.workspace }}/package.json').version")"
+          echo "OK: anonymous install from the release asset works"
