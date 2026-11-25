@@ -57,6 +57,9 @@ npx specgate
 
 # or install globally
 npm install -g specgate
+
+# no npm account? run straight from the repo
+npx github:aazh2026/specgate
 ```
 
 Requires Node.js 20+. No runtime dependencies.
