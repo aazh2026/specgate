@@ -74,10 +74,32 @@ cd specgate && node bin/specgate.js
 
 Requires Node.js 20+. No runtime dependencies.
 
-> **Coming to npm.** The publish pipeline is wired up, but the package is not on
-> the registry yet — `npx specgate` will 404 until it is. Use the release
+> **Coming to npm.** The publish pipeline is wired up, but the package is not
+> on npmjs.org yet — `npx specgate` will 404 until it is. Use the release
 > tarball form above in the meantime; it runs the exact same published
 > tarball and needs no npm account.
+
+### GitHub Packages (fallback, needs a token)
+
+The same tarball is also published to GitHub Packages as
+`@aazh2026/specgate`. Be aware of one registry rule before you use it:
+**`npm.pkg.github.com` requires an auth token for every read**, even though
+the package is publicly visible. An anonymous install returns
+`401 authentication token not provided`.
+
+```bash
+npm install @aazh2026/specgate --registry https://npm.pkg.github.com
+```
+
+with a `.npmrc` carrying a GitHub token that has the `read:packages` scope:
+
+```
+//npm.pkg.github.com/:_authToken=ghp_xxx
+```
+
+This is a fallback for people who already have a GitHub token — not a
+replacement for a public npmjs.org package. The two zero-token paths above
+(tarball, `npx github:`) are the ones that need no credentials at all.
 
 ## Quick start
 

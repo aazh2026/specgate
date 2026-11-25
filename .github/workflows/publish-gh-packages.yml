@@ -4,11 +4,19 @@ name: Publish to GitHub Packages
 #
 # Why this exists: npmjs.org closed unauthenticated account creation
 # ("Account creation via legacy auth is unavailable") and www.npmjs.com sits
-# behind a DataDome geolocation challenge, so publishing to npmjs.org needs a
+# behind a Cloudflare challenge, so publishing to npmjs.org needs a
 # human-created npm account. GitHub Packages needs no extra account: the
 # workflow's built-in GITHUB_TOKEN already carries `packages:write`.
 #
-# Result: `npx @aazh2026/specgate` works without an npmjs.org account.
+# IMPORTANT — how to actually install from this registry:
+# npm.pkg.github.com requires an auth token for EVERY read, including
+# publicly visible packages. An anonymous `npm install @aazh2026/specgate
+# --registry https://npm.pkg.github.com` returns 401 "authentication token
+# not provided". This is registry behaviour, not a misconfiguration.
+#
+# So this registry is a fallback for users who already have a GitHub token
+# with `read:packages`, NOT a replacement for a public npmjs.org package.
+# The zero-token install paths remain the release tarball and `npx github:`.
 #
 # Note: the npmjs.org package name is the unscoped `specgate`; GitHub Packages
 # requires a scope, so it is published as `@aazh2026/specgate`. Same tarball,
