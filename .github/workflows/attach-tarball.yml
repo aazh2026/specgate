@@ -3,7 +3,7 @@ name: Attach the npm tarball to the release
 # Every release ships the exact npm tarball as an asset. This gives an
 # install path that needs no npm account and no registry token:
 #
-#   npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.3/specgate-0.1.3.tgz specgate
+#   npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.4/specgate-0.1.4.tgz specgate
 #
 # That matters because npmjs.org closed unauthenticated account creation
 # ("Account creation via legacy auth is unavailable") and www.npmjs.com sits
