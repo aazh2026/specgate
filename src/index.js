@@ -6,13 +6,26 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { parseSpec } from './spec/parse.js';
 import { collectCodeFiles, findSpecFiles } from './walk.js';
 import { indexFiles, matchCriterion } from './matcher.js';
 import { computeScore } from './report.js';
 
-export const VERSION = '0.1.0';
+// Read the version from package.json so it can never drift from the published
+// package.
+function readVersion() {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8'));
+    return pkg.version || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+export const VERSION = readVersion();
 
 /**
  * @param {{root: string, specFiles?: string[]}} options

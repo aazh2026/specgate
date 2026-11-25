@@ -5,13 +5,25 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import { runSpecgate } from '../src/index.js';
 import { renderText, renderJson, renderSarif } from '../src/report.js';
 import { init, renderInitResult } from '../src/scaffold/init.js';
 
-const VERSION = '0.1.0';
+// Read the version from package.json so it can never drift from the published
+// package. Falls back to a literal if package.json is missing.
+function readVersion() {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8'));
+    return pkg.version || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+const VERSION = readVersion();
 
 const USAGE = `
 specgate ${VERSION} — requirement coverage for your codebase
@@ -136,7 +148,7 @@ function main() {
     return 0;
   }
   if (opts.version) {
-    console.log(opts.version ? VERSION : VERSION);
+    console.log(VERSION);
     return 0;
   }
   if (!['text', 'json', 'sarif'].includes(opts.format)) {
