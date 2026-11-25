@@ -1,0 +1,53 @@
+name: Publish to GitHub Packages
+
+# Publishes the CLI to GitHub Packages, which is an npm-compatible registry.
+#
+# Why this exists: npmjs.org closed unauthenticated account creation
+# ("Account creation via legacy auth is unavailable") and www.npmjs.com sits
+# behind a DataDome geolocation challenge, so publishing to npmjs.org needs a
+# human-created npm account. GitHub Packages needs no extra account: the
+# workflow's built-in GITHUB_TOKEN already carries `packages:write`.
+#
+# Result: `npx @aazh2026/specgate` works without an npmjs.org account.
+#
+# Note: the npmjs.org package name is the unscoped `specgate`; GitHub Packages
+# requires a scope, so it is published as `@aazh2026/specgate`. Same tarball,
+# same version, two registries.
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+
+      - name: Verify the CLI still works before publishing
+        run: node --test test/*.test.js
+
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # GitHub Packages requires a scope; publish under @aazh2026/specgate
+          # while keeping the unscoped `specgate` name for npmjs.org.
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            p.name = "@aazh2026/specgate";
+            fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");
+          '
+          npm publish --registry https://npm.pkg.github.com --access public
