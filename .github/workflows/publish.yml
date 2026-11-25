@@ -17,7 +17,11 @@ jobs:
         with:
           node-version: 22.14.0
           registry-url: https://registry.npmjs.org
-      # The package is published under this name on npmjs. The unscoped
+      # Trusted publishing (OIDC) needs npm 11.5.1 or newer, and the npm that
+      # ships with Node 22.14.0 is still 10.x.
+      - name: Upgrade npm
+        run: npm install --global npm@latest
+      # The package is published under this name on npm. The unscoped
       # `specgate` name is refused by the registry because `spec-gate` already
       # exists and npm blocks near-identical names.
       - name: Set the npm package name
@@ -28,9 +32,8 @@ jobs:
             pkg.name = 'specgate-cli';
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
-      # Trusted publishing (OIDC) is used when the runner can mint an id-token;
-      # the legacy NPM_TOKEN secret stays as a fallback for self-hosted or
-      # restricted runners.
+      # No NODE_AUTH_TOKEN on purpose: the npmjs account has a Trusted
+      # Publisher connection for this repository and workflow, so npm
+      # authenticates with a short-lived OIDC token instead of a stored
+      # credential.
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
