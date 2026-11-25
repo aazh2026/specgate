@@ -6,8 +6,6 @@ on:
 
 jobs:
   publish:
-    # Skip cleanly when no npm token is configured yet.
-    if: ${{ secrets.NPM_TOKEN != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
