@@ -1,6 +1,6 @@
 {
   "name": "specgate",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Requirement coverage for your codebase. Like test coverage, but for acceptance criteria. Deterministic, no LLM at runtime.",
   "type": "module",
   "bin": {

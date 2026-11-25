@@ -16,7 +16,7 @@ score. Every time.
 ![specgate demo](assets/demo.gif)
 
 ```bash
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.2/specgate-0.1.2.tgz specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.3/specgate-0.1.3.tgz specgate
 ```
 
 ```
@@ -59,7 +59,7 @@ It tells you nothing about *which requirements exist*.
 
 ```bash
 # run without installing — no npm account, no registry token
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.2/specgate-0.1.2.tgz specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.3/specgate-0.1.3.tgz specgate
 
 # or straight from the git tag
 npx --yes github:aazh2026/specgate
@@ -106,7 +106,7 @@ replacement for a public npmjs.org package. The two zero-token paths above
 If your project has no written spec yet, scaffold one:
 
 ```bash
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.2/specgate-0.1.2.tgz specgate init
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.3/specgate-0.1.3.tgz specgate init
 ```
 
 That writes a starter `SPEC.md` with the acceptance criteria already structured,
@@ -116,7 +116,7 @@ plus a `.github/workflows/requirements.yml` CI gate. It detects your stack
 Then edit the criteria, tag your tests, and scan:
 
 ```bash
-npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.2/specgate-0.1.2.tgz specgate
+npx --yes --package=https://github.com/aazh2026/specgate/releases/download/v0.1.3/specgate-0.1.3.tgz specgate
 ```
 
 ## Usage
@@ -217,7 +217,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aazh2026/specgate@v0.1.2
+      - uses: aazh2026/specgate@v0.1.3
         with:
           min: 80
           fail-uncovered: true
@@ -227,7 +227,7 @@ The action exposes the score as an output:
 
 ```yaml
       - id: specgate
-        uses: aazh2026/specgate@v0.1.2
+        uses: aazh2026/specgate@v0.1.3
       - run: echo "Coverage was ${{ steps.specgate.outputs.score }}%"
 ```
 
@@ -254,7 +254,7 @@ For GitHub code scanning, upload the SARIF report:
 Or let the action do it:
 
 ```yaml
-      - uses: aazh2026/specgate@v0.1.2
+      - uses: aazh2026/specgate@v0.1.3
         with:
           sarif: specgate.sarif
       - uses: github/codeql-action/upload-sarif@v3
